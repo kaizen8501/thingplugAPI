@@ -1,5 +1,7 @@
-from ThingPlugApi import ThingPlug
+import sys
 import argparse
+sys.path.insert(0,'../')
+from ThingPlugApi import ThingPlug 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'ThingPlug Login Example')
