@@ -310,7 +310,7 @@ SUBS_PREFIX = 'wiznet_'
 if __name__ == '__main__':
     thingplug = ThingPlug('onem2m.sktiot.com',9000)
     
-    thingplug.login('daniel', 'wiznet1206^')
+    thingplug.login('xxxxx', 'xxxxx')
     thingplug.getDeviceList()
 
 # Sample 
@@ -324,8 +324,7 @@ if __name__ == '__main__':
     thingplug.setMqttClientId(mqtt_client_id)
     thingplug.mqttConnect()
 
-    thingplug.setDataServerInfo('222.98.173.202', 5000)
-    #thingplug.setDataServerInfo('222.98.173.194', 5000)
+    thingplug.setDataServerInfo('127.0.0.1', 5000)
     status,node_cnt,node_list = thingplug.getDeviceList()
     
     for i in range(int(node_cnt)):
