@@ -1,3 +1,4 @@
+import sys
 import httplib
 import json
 import random
@@ -7,11 +8,13 @@ import socket
 import paho.mqtt.client as mqtt
 #import xml.etree.ElementTree as ET
 from bs4 import BeautifulSoup
+import argparse
 
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 class ThingPlug(object):
     def __init__(self,host,port):
+        self.app_eui = ''
         self.ukey = ''
         self.user_id = ''
         self.user_pw = ''
@@ -27,7 +30,6 @@ class ThingPlug(object):
     def __del__(self):
         self.mqttDisconnect()
          
-    
     def http_connect(self):
         self.conn = httplib.HTTPConnection(self.host,self.port)
     
@@ -39,17 +41,23 @@ class ThingPlug(object):
         self.user_pw = user_pw
         self.ukey = ""
         
+#         if len(self.app_eui) == 0:
+#             logging.warning('Need to set APP EUI')
+#             return False
+        
         htt_header = {"password" : self.user_pw,
                       "user_id" : self.user_id,
                       "Accept": "application/json"
                       }
         
         self.http_connect()
+        #query = "/" + self.app_eui + "?division=user&function=login"
+        #self.conn.request("PUT",query, "", htt_header)
         self.conn.request("PUT","/ThingPlug?division=user&function=login", "", htt_header)
         resp_data = self.conn.getresponse()
         
         if resp_data.status != 200:
-            logging.warning('status :' + resp_data.status)
+            logging.warning('status :' + str(resp_data.status))
             self.http_close()
             return False
 
@@ -68,13 +76,17 @@ class ThingPlug(object):
     def getDeviceList(self):
         if len(self.ukey) == 0:
             logging.warning('Invalid user key')
-            return False
+            return False, None, None
+#         if len(self.app_eui) == 0:
+#             logging.warning('Need to set APP EUI')
+#             return False, None, None
         
         headers = {"uKey" : self.ukey,
                    "Accept": "application/json"
                    }
 
         query = "/ThingPlug?division=searchDevice&function=myDevice&startIndex=1&countPerPage=5"
+        #query = "/" + self.app_eui + "?division=searchDevice&function=myDevice&startIndex=1&countPerPage=5"
         self.http_connect()
         self.conn.request("GET",query,"", headers)
         resp_data = self.conn.getresponse()
@@ -82,13 +94,13 @@ class ThingPlug(object):
         if resp_data.status != 200:
             logging.warning('status :' + resp_data.status)
             self.http_close()
-            return False
+            return False, None, None
 
         json_body = json.loads(resp_data.read())
         if json_body['result_code'] != '200':
             logging.warning("getDeviceList Fail[result code : " + json_body['result_code'] + "]")
             self.http_close()
-            return False
+            return False, None, None
 
         self.deviceCnt = json_body['total_list_count']
         
@@ -101,6 +113,10 @@ class ThingPlug(object):
         return True, self.deviceCnt, self.deviceList
     
     def getLatestData(self,node_id,container):
+        if len(self.app_eui) == 0:
+            logging.warning('Need to set APP EUI')
+            return False
+
         headers = {"Connection" : "keep-alive",
                    "uKey" : self.ukey,
                    "X-M2M-Origin" : node_id,
@@ -108,7 +124,8 @@ class ThingPlug(object):
                    "Accept": "application/json"
                    }
         
-        query = "/ThingPlug/v1_0/remoteCSE-"+ node_id + "/container-" + container + "/latest"
+        #query = "/ThingPlug/v1_0/remoteCSE-"+ node_id + "/container-" + container + "/latest"
+        query = "/" + self.app_eui + "/v1_0/remoteCSE-"+ node_id + "/container-" + container + "/latest"
         self.http_connect()
         self.conn.request("GET",query,"", headers)
         
@@ -125,6 +142,10 @@ class ThingPlug(object):
     def createSubscription(self, node_id, subs_name, container_name, noti_client_id):
         if len(self.ukey) == 0:
             logging.warning('Invalid user key')
+            return False
+
+        if len(self.app_eui) == 0:
+            logging.warning('Need to set APP EUI')
             return False
 
         headers = {"Accept": "application/json",
@@ -146,7 +167,8 @@ class ThingPlug(object):
                     "    <nct>1</nct>\n" + \
                     "</m2m:sub>"
 
-        query = '/ThingPlug/v1_0/remoteCSE-' + node_id + '/container-' + container_name
+        #query = '/ThingPlug/v1_0/remoteCSE-' + node_id + '/container-' + container_name
+        query = '/' + self.app_eui + '/v1_0/remoteCSE-' + node_id + '/container-' + container_name
         self.http_connect()
         self.conn.request("POST",query,payload, headers)
          
@@ -166,6 +188,10 @@ class ThingPlug(object):
         if len(self.ukey) == 0:
             logging.warning('Invalid user key')
             return False
+        
+        if len(self.app_eui) == 0:
+            logging.warning('Need to set APP EUI')
+            return False
 
         headers = {"Accept": "application/json",
            "X-M2M-Origin" : node_id,
@@ -173,7 +199,8 @@ class ThingPlug(object):
            "uKey" : self.ukey
            }
   
-        query = '/ThingPlug/v1_0/remoteCSE-' + node_id + '/container-' + container_name + '/subscription-' + subs_name
+        #query = '/ThingPlug/v1_0/remoteCSE-' + node_id + '/container-' + container_name + '/subscription-' + subs_name
+        query = '/' + self.app_eui + '/v1_0/remoteCSE-' + node_id + '/container-' + container_name + '/subscription-' + subs_name
         self.http_connect()
         self.conn.request("GET",query,"", headers)
          
@@ -194,6 +221,10 @@ class ThingPlug(object):
         if len(self.ukey) == 0:
             logging.warning('Invalid user key')
             return False
+        
+        if len(self.app_eui) == 0:
+            logging.warning('Need to set APP EUI')
+            return False        
 
         headers = {
             'accept': "application/json",
@@ -203,7 +234,8 @@ class ThingPlug(object):
             'content-type': "application/vnd.onem2m-res+xml;ty=23",
             }
         
-        query = "/ThingPlug/v1_0/remoteCSE-" + node_id + "/container-" + container_name + "/subscription-" + subs_name
+        #query = "/ThingPlug/v1_0/remoteCSE-" + node_id + "/container-" + container_name + "/subscription-" + subs_name
+        query = "/" + self.app_eui + "/v1_0/remoteCSE-" + node_id + "/container-" + container_name + "/subscription-" + subs_name
         self.http_connect()
         self.conn.request("DELETE",query, "", headers)
         resp_data = self.conn.getresponse()
@@ -267,7 +299,8 @@ class ThingPlug(object):
         try:
             xml_root = BeautifulSoup(msg.payload,'html.parser')
             data_payload = getattr(xml_root.find('pc').find('cin').find('con'), 'string', None)
-            data = data_payload.decode('hex')
+            #data = data_payload.decode('hex')
+            data = data_payload.decode('hex').decode('hex')
             self.sendDataToDataServer(data)
         except:
             logging.warning(data_payload)
@@ -295,6 +328,9 @@ class ThingPlug(object):
     def setDataServerInfo(self,host,port):
         self.data_server_host = host
         self.data_server_port = port
+    
+    def setAppEui(self,app_eui):
+        self.app_eui = app_eui
         
 #     def is_hex(s):
 #         hex_digits = set("0123456789abcdefABCDEF")
@@ -303,14 +339,53 @@ class ThingPlug(object):
 #                 return False
 #         return True
 
-CONTAINER = 'WIZnet'
+USER_ID = ""
+USER_PW = ""
+
+TP_HOST = "onem2m.sktiot.com"
+TP_PORT = 9000
+
+LK_HOST = "127.0.0.1"
+LK_PORT = 5000
+
+CONTAINER = 'LoRa'
+APP_EUI = 'ThingPlug'
 SUBS_PREFIX = 'wiznet_'
     
-    
+#Parameter -h onem2m.sktiot.com -u lk_technet -pw lktn34!!@@ -p 9000 -lh 127.0.0.1 -lp 5000
+
+
 if __name__ == '__main__':
-    thingplug = ThingPlug('onem2m.sktiot.com',9000)
+    parser = argparse.ArgumentParser(description = '')
     
-    thingplug.login('xxxxx', 'xxxxx')
+    parser.add_argument('-u', '--user_id', type=str, help='ThingPlug User ID', required=True)
+    parser.add_argument('-pw', '--user_pw', type=str, help='ThingPlug User Password', required=True)
+    
+    parser.add_argument('-th', '--tp_host', type=str, help='ThingPlug Host', required=False)
+    parser.add_argument('-tp', '--tp_port', type=int, help='ThingPlug Port', required=False)
+
+    parser.add_argument('-lh', '--lk_host', type=str, help='LK Technet Host', required=False)
+    parser.add_argument('-lp', '--lk_port', type=int, help='LK Technet Port', required=False)
+    
+    parser.add_argument('-c', '--container', type=str, help='ThingPlug Container Name', required=False)
+    parser.add_argument('-ae', '--app_eui', type=str, help='ThingPlug App EUI', required=False)
+    
+    args = parser.parse_args()
+
+    USER_ID = args.user_id
+    USER_PW = args.user_pw
+
+    if args.tp_host != None:    TP_HOST = args.tp_host
+    if args.tp_port != None:    TP_PORT = args.tp_port
+    if args.lk_host != None:    LK_HOST = args.lk_host
+    if args.lk_port != None:    LK_PORT = args.lk_port
+    if args.container != None:  CONTAINER = args.container
+    if args.app_eui != None:    APP_EUI = args.app_eui
+    
+    thingplug = ThingPlug(TP_HOST,TP_PORT)
+    
+    thingplug.setAppEui(APP_EUI)
+    thingplug.login(USER_ID, USER_PW)
     thingplug.getDeviceList()
 
 # Sample 
@@ -324,8 +399,12 @@ if __name__ == '__main__':
     thingplug.setMqttClientId(mqtt_client_id)
     thingplug.mqttConnect()
 
-    thingplug.setDataServerInfo('127.0.0.1', 5000)
+    thingplug.setDataServerInfo(LK_HOST, LK_PORT)
     status,node_cnt,node_list = thingplug.getDeviceList()
+    
+    if node_cnt == None:
+        logging.warning('Node list is empty')
+        sys.exit()
     
     for i in range(int(node_cnt)):
         subs_name = SUBS_PREFIX + node_list[i]
