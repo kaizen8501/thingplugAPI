@@ -77,16 +77,12 @@ class ThingPlug(object):
         if len(self.ukey) == 0:
             logging.warning('Invalid user key')
             return False, None, None
-#         if len(self.app_eui) == 0:
-#             logging.warning('Need to set APP EUI')
-#             return False, None, None
         
         headers = {"uKey" : self.ukey,
                    "Accept": "application/json"
                    }
 
-        query = "/ThingPlug?division=searchDevice&function=myDevice&startIndex=1&countPerPage=5"
-        #query = "/" + self.app_eui + "?division=searchDevice&function=myDevice&startIndex=1&countPerPage=5"
+        query = "/ThingPlug?division=searchDevice&function=myDevice&startIndex=1&countPerPage=1"
         self.http_connect()
         self.conn.request("GET",query,"", headers)
         resp_data = self.conn.getresponse()
@@ -103,15 +99,53 @@ class ThingPlug(object):
             return False, None, None
 
         self.deviceCnt = json_body['total_list_count']
-        
+
+        countPerPage = 10
         self.deviceList = []
-        for i in range(int(self.deviceCnt)):
-            self.deviceList.append(json_body['deviceSearchAPIList'][i]['device_Id'])
-            logging.info(json_body['deviceSearchAPIList'][i]['device_Id'])
-        
+        reqCnt = int(self.deviceCnt) / countPerPage
+        idxCnt = countPerPage
+
+        if( int(self.deviceCnt) % countPerPage != 0 ):  
+            reqCnt += 1
+            reminder = int(self.deviceCnt) % countPerPage
+        else:
+            reminder = 0
+            
+        for i in range(reqCnt):
+            query = "/ThingPlug?division=searchDevice&function=myDevice&startIndex="
+            query += str( (i*countPerPage) + 1)
+            query += "&countPerPage="
+            query += str(countPerPage)
+ 
+            self.http_connect()
+            self.conn.request("GET",query,"", headers)
+            resp_data = self.conn.getresponse()
+              
+            if resp_data.status != 200:
+                logging.warning('status :' + resp_data.status)
+                self.http_close()
+                return False, None, None
+             
+            json_body = json.loads(resp_data.read())
+            if json_body['result_code'] != '200':
+                logging.warning("getDeviceList Fail[result code : " + json_body['result_code'] + "]")
+                self.http_close()
+                return False, None, None
+
+            if( (i==reqCnt -1) and reminder != 0 ):
+                idxCnt = reminder
+
+            for idx in range(0,idxCnt):
+                try:
+                    self.deviceList.append(json_body['deviceSearchAPIList'][idx]['device_Id'])
+                    logging.info(json_body['deviceSearchAPIList'][idx]['device_Id'])
+                except:
+                    logging.warning('getDeviceList Fail[error idx : ' + str(idx) + "]")
+                    pass
+             
         self.http_close()
         return True, self.deviceCnt, self.deviceList
-    
+
     def getLatestData(self,node_id,container):
         if len(self.app_eui) == 0:
             logging.warning('Need to set APP EUI')
