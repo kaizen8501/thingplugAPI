@@ -11,6 +11,7 @@
 $ pip install -r requirements.txt
 ```
 **Step 2.** Example 실행 하기
+
 Example 폴더에는 ThingPlugAPI를 이용하여 ThingPlug의 기능을 사용하기 위한 예제들이 존재 하며 각각의 예제를 사용하기 위한 방법은 Example 폴더 안에 있는 문서를 참고 하기 바란다.
 
 
