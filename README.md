@@ -4,36 +4,14 @@
 본 프로젝트는 Python 2.x 문법을 기반으로 작성되었으며, ThingPlug를 사용하면서 필요한 기능들을 하나씩 추가할 예정이다.
 
 
-## Examples
-- Login
-```Windows
-$ login.py -u <user_id> -p <user_password>
-```
-- Get Device List
-```Windows
-$ get_device_list.py -u <user_id> -p <user_password>
-```
-- Get Latest Data
-```Windows
-$ get_latest_data.py -u <user_id> -p <user_password> -n <node_id> -c <container_name>
-```
-- Create Subscription
-```Windows
-$ create_subscription.py <user_id> -p <user_password> -n <node_id> -c <container_name> -s <subscription_name> -nu <notification_uri>
-```
+## 환경 설정
 
-- Retrieve Subscription
-```Windows
-$ create_subscription.py <user_id> -p <user_password> -n <node_id> -c <container_name> -s <subscription_name>
+**Step 1.** 서드파티 모듈 설치하기
 ```
+$ pip install -r requirements.txt
+```
+**Step 2.** Example 실행 하기
+Example 폴더에는 ThingPlugAPI를 이용하여 ThingPlug의 기능을 사용하기 위한 예제들이 존재 하며 각각의 예제를 사용하기 위한 방법은 Example 폴더 안에 있는 문서를 참고 하기 바란다.
 
-- Delete Subscription
-```Windows
-$ create_subscription.py <user_id> -p <user_password> -n <node_id> -c <container_name> -s <subscription_name>
-```
 
-**Step 1.** Update tools.
 
-```
-pip install -r requirements.txt
-```

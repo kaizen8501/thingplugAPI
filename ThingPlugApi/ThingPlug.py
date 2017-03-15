@@ -35,42 +35,52 @@ class ThingPlug(object):
     
     def http_close(self):
         self.conn.close()
+    
+    def thingplugHttpReq(self, req_msg, resp_status):
+        json_body = {}
+
+        self.http_connect()
+        self.conn.request(req_msg['method'], req_msg['query'], req_msg['payload'], req_msg['header'])
+        resp_data = self.conn.getresponse()
+
+        if resp_data.status != resp_status:
+            logging.warning('status :' + str(resp_data.status))
+            self.http_close()
+            return False
+
+        body = resp_data.read()
+
+        if len(body) != 0:
+            json_body = json.loads(body)
         
+        self.http_close()
+
+        if 'result_code' in json_body.keys() and json_body['result_code'] != '200':
+            logging.warning("ThingPlugHttpReq Fail[result code : " + json_body['result_code'] + "]")
+            return False
+
+        return json_body
+
     def login(self,user_id, user_pw): 
         self.user_id = user_id
         self.user_pw = user_pw
         self.ukey = ""
         
-#         if len(self.app_eui) == 0:
-#             logging.warning('Need to set APP EUI')
-#             return False
+        header = {"password" : self.user_pw,
+                  "user_id" : self.user_id,
+                  "Accept": "application/json"
+                  }
         
-        htt_header = {"password" : self.user_pw,
-                      "user_id" : self.user_id,
-                      "Accept": "application/json"
-                      }
+        query = "/ThingPlug?division=user&function=login"
+        req_msg = {'method': "PUT", 'header': header, 'query': query, 'payload': ''}
         
-        self.http_connect()
-        #query = "/" + self.app_eui + "?division=user&function=login"
-        #self.conn.request("PUT",query, "", htt_header)
-        self.conn.request("PUT","/ThingPlug?division=user&function=login", "", htt_header)
-        resp_data = self.conn.getresponse()
-        
-        if resp_data.status != 200:
-            logging.warning('status :' + str(resp_data.status))
-            self.http_close()
-            return False
-
-        json_body = json.loads(resp_data.read())
-        if json_body['result_code'] != '200':
-            logging.warning("Login Fail[result code : " + json_body['result_code'] + "]")
-            self.http_close()
+        json_body = self.thingplugHttpReq(req_msg, 200)
+        if json_body == False:
             return False
         
         self.ukey = json_body['userVO']['uKey']
         logging.info("Login Success")
-
-        self.http_close()
+        
         return True
     
     def getDeviceList(self):
@@ -78,26 +88,16 @@ class ThingPlug(object):
             logging.warning('Invalid user key')
             return False, None, None
         
-        headers = {"uKey" : self.ukey,
+        header = {"uKey" : self.ukey,
                    "Accept": "application/json"
                    }
 
         query = "/ThingPlug?division=searchDevice&function=myDevice&startIndex=1&countPerPage=1"
-        self.http_connect()
-        self.conn.request("GET",query,"", headers)
-        resp_data = self.conn.getresponse()
+        req_msg = {'method':"GET", 'header':header, 'query':query, 'payload': ''}
+        json_body = self.thingplugHttpReq(req_msg, 200)
+        if json_body == False:
+            return False, None, None
         
-        if resp_data.status != 200:
-            logging.warning('status :' + resp_data.status)
-            self.http_close()
-            return False, None, None
-
-        json_body = json.loads(resp_data.read())
-        if json_body['result_code'] != '200':
-            logging.warning("getDeviceList Fail[result code : " + json_body['result_code'] + "]")
-            self.http_close()
-            return False, None, None
-
         self.deviceCnt = json_body['total_list_count']
 
         countPerPage = 10
@@ -116,22 +116,12 @@ class ThingPlug(object):
             query += str( (i*countPerPage) + 1)
             query += "&countPerPage="
             query += str(countPerPage)
+            
+            req_msg = {'method':'GET', 'header':header, 'query':query, 'payload': ''}
+            json_body = self.thingplugHttpReq(req_msg, 200)
+            if json_body == False:
+                return False, None, None
  
-            self.http_connect()
-            self.conn.request("GET",query,"", headers)
-            resp_data = self.conn.getresponse()
-              
-            if resp_data.status != 200:
-                logging.warning('status :' + resp_data.status)
-                self.http_close()
-                return False, None, None
-             
-            json_body = json.loads(resp_data.read())
-            if json_body['result_code'] != '200':
-                logging.warning("getDeviceList Fail[result code : " + json_body['result_code'] + "]")
-                self.http_close()
-                return False, None, None
-
             if( (i==reqCnt -1) and reminder != 0 ):
                 idxCnt = reminder
 
@@ -143,35 +133,53 @@ class ThingPlug(object):
                     logging.warning('getDeviceList Fail[error idx : ' + str(idx) + "]")
                     pass
              
-        self.http_close()
         return True, self.deviceCnt, self.deviceList
 
     def getLatestData(self,node_id,container):
         if len(self.app_eui) == 0:
             logging.warning('Need to set APP EUI')
-            return False
+            return False, None, None
 
-        headers = {"Connection" : "keep-alive",
-                   "uKey" : self.ukey,
-                   "X-M2M-Origin" : node_id,
-                   "X-M2M-RI" : node_id + "_" + str(random.randrange(1000,1100)),
-                   "Accept": "application/json"
-                   }
+        header = {"Connection" : "keep-alive",
+                  "uKey" : self.ukey,
+                  "X-M2M-Origin" : node_id,
+                  "X-M2M-RI" : node_id + "_" + str(random.randrange(1000,1100)),
+                  "Accept": "application/json"
+                  }
         
-        #query = "/ThingPlug/v1_0/remoteCSE-"+ node_id + "/container-" + container + "/latest"
         query = "/" + self.app_eui + "/v1_0/remoteCSE-"+ node_id + "/container-" + container + "/latest"
-        self.http_connect()
-        self.conn.request("GET",query,"", headers)
-        
-        resp_data = self.conn.getresponse()
-        if resp_data.status != 200:
-            logging.warning('status :' + str(resp_data.status))
-            self.http_close()
+        req_msg = {'method': 'GET', 'header': header, 'query': query, 'payload': ''}
+        json_body = self.thingplugHttpReq(req_msg, 200)
+        if json_body == False:
+            return False, None, None
+
+        return True,json_body['cin']['con'],json_body['cin']['lt']
+    
+    def createMgmtInstance(self, node_id, mgmtCmd, mgmtMsg):
+        if len(self.ukey) == 0:
+            logging.warning('Invalid user key')
             return False
 
-        json_body = json.loads(resp_data.read())
-        self.http_close()
-        return True,json_body['cin']['con']
+        header = {"Accept": "application/json",
+                   "X-M2M-Origin": node_id,
+                   "X-M2M-RI": node_id + "_" + str(random.randrange(1000, 1100)),
+                   "Content-Type": "application/json;ty=12",
+                   "uKey": self.ukey
+                   }
+
+        cmd = '{\"cmd\":\"' + mgmtMsg + '\"}'
+        payload = {'mgc': {'exra': cmd, 'exe': 'true', 'cmt': mgmtCmd}}
+        query = '/' + self.app_eui + '/v1_0/mgmtCmd-' + node_id + '_' + mgmtCmd
+        req_msg = {'method': "PUT", 'header': header, 'query': query, 'payload': json.dumps(payload)}
+
+        json_body = self.ThingPlugHttpReq(req_msg, 200)
+        if json_body == False:
+            return False
+
+        self.execInstance = json_body['mgc']['exin'][0]['ri']
+        logging.info('MgmtInstance is created')
+        return True
+
     
     def createSubscription(self, node_id, subs_name, container_name, noti_client_id):
         if len(self.ukey) == 0:
@@ -182,12 +190,12 @@ class ThingPlug(object):
             logging.warning('Need to set APP EUI')
             return False
 
-        headers = {"Accept": "application/json",
-                   "X-M2M-Origin" : node_id,
-                   "X-M2M-RI" : node_id + "_" + str(random.randrange(1000,1100)),
-                   "X-M2M-NM" : subs_name,
-                   "Content-Type" : "application/vnd.onem2m-res+xml;ty=23",
-                   "uKey" : self.ukey
+        header = {"Accept": "application/json",
+                  "X-M2M-Origin" : node_id,
+                  "X-M2M-RI" : node_id + "_" + str(random.randrange(1000,1100)),
+                  "X-M2M-NM" : subs_name,
+                  "Content-Type" : "application/vnd.onem2m-res+xml;ty=23",
+                  "uKey" : self.ukey
                    }
 
         payload =  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + \
@@ -200,21 +208,15 @@ class ThingPlug(object):
                     "    <nu>MQTT|" + noti_client_id + "</nu>\n" + \
                     "    <nct>1</nct>\n" + \
                     "</m2m:sub>"
+        #<nct>, 1 : Modified Attribute only, 2: Whole Resource
 
         #query = '/ThingPlug/v1_0/remoteCSE-' + node_id + '/container-' + container_name
         query = '/' + self.app_eui + '/v1_0/remoteCSE-' + node_id + '/container-' + container_name
-        self.http_connect()
-        self.conn.request("POST",query,payload, headers)
-         
-        resp_data = self.conn.getresponse()
-        
-        if resp_data.status != 201:
-            resp_header = resp_data.getheaders()
-            logging.warning(resp_header[0][1])
-            self.http_close()
+        req_msg = {'method': 'POST', 'header': header, 'query': query, 'payload': payload}
+        json_body = self.thingplugHttpReq(req_msg, 201)
+        if json_body == False:
             return False
-            
-        self.http_close()
+        
         logging.info('subscription is created')
         return True
         
@@ -227,29 +229,21 @@ class ThingPlug(object):
             logging.warning('Need to set APP EUI')
             return False
 
-        headers = {"Accept": "application/json",
-           "X-M2M-Origin" : node_id,
-           "X-M2M-RI" : node_id + "_" + str(random.randrange(1000,1100)),
-           "uKey" : self.ukey
-           }
+        header = {"Accept": "application/json",
+                  "X-M2M-Origin" : node_id,
+                  "X-M2M-RI" : node_id + "_" + str(random.randrange(1000,1100)),
+                  "uKey" : self.ukey
+                  }
   
         #query = '/ThingPlug/v1_0/remoteCSE-' + node_id + '/container-' + container_name + '/subscription-' + subs_name
         query = '/' + self.app_eui + '/v1_0/remoteCSE-' + node_id + '/container-' + container_name + '/subscription-' + subs_name
-        self.http_connect()
-        self.conn.request("GET",query,"", headers)
-         
-        resp_data = self.conn.getresponse()
+        req_msg = {'method': 'GET', 'header': header, 'query': query, 'payload': ''}
+        json_body = self.thingplugHttpReq(req_msg, 200)
+        if json_body == False:
+            return False 
         
-        if resp_data.status != 200:
-            resp_header = resp_data.getheaders()
-            logging.warning(resp_data.status)
-            logging.warning(resp_header[0][1])
-            self.http_close()
-            return False
-        else:
-            logging.info('registered subscription')
-            self.http_close()
-            return True
+        logging.info('registered subscription')
+        return True
     
     def deleteSubscription(self, node_id, subs_name, container_name):
         if len(self.ukey) == 0:
@@ -260,7 +254,7 @@ class ThingPlug(object):
             logging.warning('Need to set APP EUI')
             return False        
 
-        headers = {
+        header = {
             'accept': "application/json",
             'x-m2m-ri': node_id + "_" + str(random.randrange(1000,1100)),
             'x-m2m-origin': node_id,
@@ -269,20 +263,15 @@ class ThingPlug(object):
             }
         
         #query = "/ThingPlug/v1_0/remoteCSE-" + node_id + "/container-" + container_name + "/subscription-" + subs_name
-        query = "/" + self.app_eui + "/v1_0/remoteCSE-" + node_id + "/container-" + container_name + "/subscription-" + subs_name
-        self.http_connect()
-        self.conn.request("DELETE",query, "", headers)
-        resp_data = self.conn.getresponse()
+        query = '/' + self.app_eui + '/v1_0/remoteCSE-' + node_id + '/container-' + container_name + '/subscription-' + subs_name
+        req_msg = {'method': 'DELETE', 'header': header, 'query': query, 'payload': ''}
+        json_body = self.thingplugHttpReq(req_msg, 200)
+        if json_body == False:
+            return False 
         
-        if resp_data.status != 200:
-            resp_header = resp_data.getheaders()
-            logging.warning(resp_data.status)
-            logging.warning(resp_header[0][1])
-        else:
-            logging.info('subscription is deleted')
+        logging.info('subscription is deleted')
+        return True
 
-        self.http_close()
-        
     def getUserId(self):
         return self.user_id
     
@@ -291,6 +280,9 @@ class ThingPlug(object):
     
     def getuKey(self):
         return self.ukey
+
+    def getDevList(self):
+        return self.deviceList
 
     def mqttConnect(self):
         if self.mqttc != None:
@@ -309,7 +301,31 @@ class ThingPlug(object):
             self.mqttSubscribe(subs_topic)
         except:
             return
-        
+    
+    def mqttSetOnMessage(self, on_message_cb ):
+        self.mqttc.on_message = on_message_cb
+    
+    def mqttSetOnConnect(self, on_connect_cb ):
+        self.mqttc.on_connect = on_connect_cb
+    #daniel for ext msg callback
+#     def mqttConnect_ext(self, ext_message_cb):
+#         if self.mqttc != None:
+#             self.mqttc.reinitialise(self.mqtt_client_id)
+#         else:
+#             self.mqttc = mqtt.Client(self.mqtt_client_id)
+# 
+#         self.mqttc.on_connect = self.mqtt_on_connect
+#         self.mqttc.on_message = ext_message_cb
+# 
+#         try:
+#             self.mqttc.username_pw_set(self.getUserId(), self.getuKey())
+#             self.mqttc.connect(self.host, 1883, 60)
+# 
+#             subs_topic = '/oneM2M/req/+/' + self.mqtt_client_id
+#             self.mqttSubscribe(subs_topic)
+#         except:
+#             return
+
 #         self.mqttc_thread = threading.Thread(name = 'mqtt_thread', target = self.mqttLoopForever())
 #         self.mqttc_thread.start()
         
@@ -322,6 +338,9 @@ class ThingPlug(object):
     
     def mqttLoopForever(self):
         self.mqttc.loop_forever()
+
+    def mqttLoop(self):
+        self.mqttc.loop_start()
         
     def mqtt_on_connect(self, mqttc, userdata, flags, rc):
         logging.info('mqtt connected')
