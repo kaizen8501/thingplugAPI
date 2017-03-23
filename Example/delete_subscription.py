@@ -14,7 +14,7 @@ if __name__ == '__main__':
     
     args = parser.parse_args()
     
-    thingplug = ThingPlug.ThingPlug('onem2m.sktiot.com',9000)
+    thingplug = ThingPlug.ThingPlug('onem2m.sktiot.com',9443)
     thingplug.login(args.user_id, args.user_pw)
     
     thingplug.deleteSubscription( args.node_id, args.subscription, args.container)

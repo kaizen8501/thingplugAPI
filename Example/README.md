@@ -23,7 +23,7 @@ optional arguments:
   -th THINGPLUG_HOST, --thingplug_host THINGPLUG_HOST
                         ThingPlug Host IP(Default:onem2m.sktiot.com)
   -tp THINGPLUG_PORT, --thingplug_port THINGPLUG_PORT
-                        ThingPlug Port(Default:9000)
+                        ThingPlug Port(Default:9443)
 ```
 
 ```
@@ -34,9 +34,9 @@ INFO:Login Success
 ZG9qcUNscTA3RlhLZ.............................................
 ```
 
-테스트 망이 아닌 상용망(thingplugpf.sktiot.com)에 연결하기 위해서는 아래와 같이 THINGPLUG_HOST와 THINGPLUG_PORT를 파라미터로 입력하면 된다. THINGPLUG_HOST와 THINGPLUG_PORT를 별도로 입력하지 않으면, Default 값으로 onem2m.sktiot.com과 9000번 포트를 이용한다.
+THINGPLUG_HOST와 THINGPLUG_PORT를 별도로 입력하지 않으면, Default 값으로 onem2m.sktiot.com과 9443번 포트를 이용한다.
 ```
-$ python login.py -u USER_ID -p USER_PASSWORD -th thingplugpf.sktiot.com -tp 9000
+$ python login.py -u USER_ID -p USER_PASSWORD -th onem2m.sktiot.com -tp 9443
 ```
 
 
@@ -61,7 +61,7 @@ optional arguments:
   -th THINGPLUG_HOST, --thingplug_host THINGPLUG_HOST
                         ThingPlug Host IP(Default:onem2m.sktiot.com)
   -tp THINGPLUG_PORT, --thingplug_port THINGPLUG_PORT
-                        ThingPlug Port(Default:9000)
+                        ThingPlug Port(Default:9443)
 ```
 
 아래와 같이 명령을 수행하면 내 계정에 등록되어 있는 Device의 갯수와 Device ID를 확인 할 수 있다.
@@ -106,7 +106,7 @@ optional arguments:
   -th THINGPLUG_HOST, --thingplug_host THINGPLUG_HOST
                         ThingPlug Host IP(Default:onem2m.sktiot.com)
   -tp THINGPLUG_PORT, --thingplug_port THINGPLUG_PORT
-                        ThingPlug Port(Default:9000)
+                        ThingPlug Port(Default:9443)
   -pt PERIOD_TIME, --period_time PERIOD_TIME
                         Get Latest Data Period Time(Default:0,One Time)
   -el ENABLE_LOG, --enable_log ENABLE_LOG
@@ -185,7 +185,7 @@ optional arguments:
   -th THINGPLUG_HOST, --thingplug_host THINGPLUG_HOST
                         ThingPlug Host IP(Default:onem2m.sktiot.com)
   -tp THINGPLUG_PORT, --thingplug_port THINGPLUG_PORT
-                        ThingPlug Port(Default:9000)
+                        ThingPlug Port(Default:9443)
   -ci MQTT_CLIENT_ID, --mqtt_client_id MQTT_CLIENT_ID
                         ThingPlug MQTT Client ID(Deafult:bridge)
 ```

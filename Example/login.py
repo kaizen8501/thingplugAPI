@@ -4,7 +4,7 @@ sys.path.insert(0,'../')
 from ThingPlugApi import ThingPlug 
 
 THINGPLUG_HOST = 'onem2m.sktiot.com'
-THINGPLUG_PORT = 9000
+THINGPLUG_PORT = 9443
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'ThingPlug Login Example')

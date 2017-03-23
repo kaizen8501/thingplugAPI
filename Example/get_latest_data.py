@@ -3,24 +3,29 @@ import argparse
 import time, datetime, sched
 from sched import scheduler
 sys.path.insert(0,'../')
+import logging
 from ThingPlugApi import ThingPlug 
 
 
 THINGPLUG_HOST = 'onem2m.sktiot.com'
-THINGPLUG_PORT = 9000
+THINGPLUG_PORT = 9443
 PERIOD_TIME = 0
 
 
 def fun_getLatestData(thingplug,node_id, container, enable_log):
-    status, data, lt_time = thingplug.getLatestData(node_id,container)
-    current_time = str(datetime.datetime.now())
-    output_data = current_time + ',' + data + ',' + lt_time + '\r\n'
-    print output_data,
-    
-    if enable_log > 0:
-        f = open('get_latest_data.log','a')
-        f.write(output_data)
-        f.close()
+    try:
+        status, data, lt_time = thingplug.getLatestData(node_id,container)
+        current_time = str(datetime.datetime.now())
+        output_data = current_time + ',' + data + ',' + lt_time + '\r\n'
+        print output_data,
+        
+        if enable_log > 0:
+            f = open('get_latest_data.log','a')
+            f.write(output_data)
+            f.close()
+    except:
+        logging.warning('Fail fun_getLatestData')
+        
 
 
 if __name__ == '__main__':

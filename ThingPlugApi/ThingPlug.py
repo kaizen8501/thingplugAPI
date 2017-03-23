@@ -10,6 +10,9 @@ import paho.mqtt.client as mqtt
 from bs4 import BeautifulSoup
 import argparse
 
+DEFAULT_TP_HTTP_PORT  = 9000
+DEFUALT_TP_HTTPS_PORT = 9443
+
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
 
 class ThingPlug(object):
@@ -31,7 +34,10 @@ class ThingPlug(object):
         self.mqttDisconnect()
          
     def http_connect(self):
-        self.conn = httplib.HTTPConnection(self.host,self.port)
+        if self.port == DEFAULT_TP_HTTP_PORT:
+            self.conn = httplib.HTTPConnection(self.host,self.port)
+        else:
+            self.conn = httplib.HTTPSConnection(self.host,self.port)
     
     def http_close(self):
         self.conn.close()
@@ -45,6 +51,7 @@ class ThingPlug(object):
 
         if resp_data.status != resp_status:
             logging.warning('status :' + str(resp_data.status))
+            logging.warning(resp_data)
             self.http_close()
             return False
 
