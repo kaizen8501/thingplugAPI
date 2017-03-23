@@ -152,7 +152,7 @@ ThingPlug에서는 구독(Subscription) 및 통지(Notification)을 위한 API�
 아래 그림과 같이, 온도정보를 감시하기 위한 장치에서 ThingPlug에게 온도센서 장치의 값을 구독 하겠다고 요청 할 수 있다.
 구독 요청이 완료되면, ThingPlug에서는 온도센서 장치의 주기보고 값을 모니터링 하고 있다가 온도 값이 변경하면 구독 요청 시 등록한 NotificationURI에게 온도 값을 전달 하는 구조로 동작 한다.
 
-![thingplug_subscription.png](.\image\thingplug_subscription.png)
+![](https://github.com/kaizen8501/thingplugAPI/blob/master/Example/image/thingplug_subscription.png?raw=true)
 
 
 ### Subscription_mqtt
