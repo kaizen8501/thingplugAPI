@@ -38,7 +38,7 @@ if __name__ == '__main__':
     parser.add_argument('-ae', '--app_eui', type=str, help='ThingPlug APP EUI', required=True)
 
     parser.add_argument('-th', '--thingplug_host', type=str, help='ThingPlug Host IP(Default:onem2m.sktiot.com)', required=False)
-    parser.add_argument('-tp', '--thingplug_port', type=int, help='ThingPlug Port(Default:9000)', required=False)
+    parser.add_argument('-tp', '--thingplug_port', type=int, help='ThingPlug Port(Default:9443)', required=False)
     parser.add_argument('-pt', '--period_time', type=int, help='Get Latest Data Period Time(Default:0,One Time)', required=False)
     parser.add_argument('-el', '--enable_log', type=int, help='', required=False)
     

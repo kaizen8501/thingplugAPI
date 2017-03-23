@@ -12,7 +12,7 @@ if __name__ == '__main__':
     parser.add_argument('-u', '--user_id', type=str, help='ThingPlug User ID', required=True)
     parser.add_argument('-p', '--user_pw', type=str, help='ThingPlug User Password', required=True)
     parser.add_argument('-th', '--thingplug_host', type=str, help='ThingPlug Host IP(Default:onem2m.sktiot.com)', required=False)
-    parser.add_argument('-tp', '--thingplug_port', type=int, help='ThingPlug Port(Default:9000)', required=False)
+    parser.add_argument('-tp', '--thingplug_port', type=int, help='ThingPlug Port(Default:9443)', required=False)
     
     args = parser.parse_args()
     
