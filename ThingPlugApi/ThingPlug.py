@@ -174,19 +174,46 @@ class ThingPlug(object):
                    "uKey": self.ukey
                    }
 
-        cmd = '{\"cmd\":\"' + mgmtMsg + '\"}'
-        payload = {'mgc': {'exra': cmd, 'exe': 'true', 'cmt': mgmtCmd}}
+        # cmd = '{\"cmd\":\"' + mgmtMsg + '\"}'
+        payload = {'mgc': {'exra': mgmtMsg, 'exe': 'true', 'cmt': mgmtCmd}}
+
         query = '/' + self.app_eui + '/v1_0/mgmtCmd-' + node_id + '_' + mgmtCmd
         req_msg = {'method': "PUT", 'header': header, 'query': query, 'payload': json.dumps(payload)}
 
-        json_body = self.ThingPlugHttpReq(req_msg, 200)
+        json_body = self.thingplugHttpReq(req_msg, 200)
         if json_body == False:
             return False
 
         self.execInstance = json_body['mgc']['exin'][0]['ri']
         logging.info('MgmtInstance is created')
-        return True
+        return True, self.execInstance
 
+    def retrieveMgmtResult(self, node_id, mgmtCmd, cmdInstance):
+        if len(self.ukey) == 0:
+            logging.warning('Invalid user key')
+            return False
+
+        header = {"Accept": "application/json",
+                   "X-M2M-Origin": node_id,
+                   "X-M2M-RI": node_id + "_" + str(random.randrange(1000, 1100)),
+                   "Content-Type": "application/json;ty=12",
+                   "uKey": self.ukey
+                   }
+
+        query = '/' + self.app_eui + '/v1_0/mgmtCmd-' + node_id + '_' + mgmtCmd + '/execInstance-' + cmdInstance
+        req_msg = {'method': "GET", 'header': header, 'query': query, 'payload': ''}
+
+        json_body = self.thingplugHttpReq(req_msg, 200)
+        if json_body == False:
+            return False
+
+        self.execStatus = json_body['exin']['exs']
+        self.execResult = ''
+        if 'exr' in json_body['exin']:
+            self.execResult = json_body['exin']['exr']
+        logging.info('retrieve mgmtCmd result')
+
+        return True, self.execStatus, self.execResult
     
     def createSubscription(self, node_id, subs_name, container_name, noti_client_id):
         if len(self.ukey) == 0:
@@ -304,7 +331,7 @@ class ThingPlug(object):
             self.mqttc.username_pw_set(self.getUserId(), self.getuKey())
             self.mqttc.connect(self.host, 1883, 60)
             
-            subs_topic = '/oneM2M/req/+/' + self.mqtt_client_id
+            subs_topic = '/oneM2M/req_msg/+/' + self.mqtt_client_id
             self.mqttSubscribe(subs_topic)
         except:
             return
