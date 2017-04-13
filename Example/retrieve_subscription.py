@@ -8,7 +8,7 @@ THINGPLUG_PORT = 9443
 THINGPLUG_APPEUI = 'ThingPlug'
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'ThingPlug Login Example')
+    parser = argparse.ArgumentParser(description = 'ThingPlug Retrieve Subscription Example')
     
     parser.add_argument('-u', '--user_id', type=str, help='ThingPlug User ID', required=True)
     parser.add_argument('-p', '--user_pw', type=str, help='ThingPlug User Password', required=True)

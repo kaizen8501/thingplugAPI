@@ -31,7 +31,7 @@ def mqtt_on_message_cb(client, userdata, msg):
         f.close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = 'ThingPlug Login Example')
+    parser = argparse.ArgumentParser(description = 'ThingPlug Subscription(MQTT) Example')
     
     parser.add_argument('-u', '--user_id', type=str, help='ThingPlug User ID', required=True)
     parser.add_argument('-p', '--user_pw', type=str, help='ThingPlug User Password', required=True)
@@ -91,5 +91,3 @@ if __name__ == '__main__':
         thingplug.createSubscription(args.node_id, subs_name, CONTAINER, mqtt_client_id)
     
     thingplug.mqttLoopForever()
-
-    print 'abcdef'
