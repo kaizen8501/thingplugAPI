@@ -330,9 +330,6 @@ class ThingPlug(object):
         try:
             self.mqttc.username_pw_set(self.getUserId(), self.getuKey())
             self.mqttc.connect(self.host, 1883, 60)
-            
-            subs_topic = '/oneM2M/req_msg/+/' + self.mqtt_client_id
-            self.mqttSubscribe(subs_topic)
         except:
             return
     
@@ -378,6 +375,8 @@ class ThingPlug(object):
         
     def mqtt_on_connect(self, mqttc, userdata, flags, rc):
         logging.info('mqtt connected')
+        subs_topic = '/oneM2M/req_msg/+/' + self.mqtt_client_id
+        self.mqttSubscribe(subs_topic)
         
     def mqtt_on_message(self, mqttc, userdata, msg):
         logging.info(msg.topic)
