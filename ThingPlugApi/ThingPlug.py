@@ -51,7 +51,7 @@ class ThingPlug(object):
 
         if resp_data.status != resp_status:
             logging.warning('status :' + str(resp_data.status))
-            logging.warning(resp_data)
+            logging.warning(resp_data.msg)
             self.http_close()
             return False
 
@@ -379,18 +379,7 @@ class ThingPlug(object):
         self.mqttSubscribe(subs_topic)
         
     def mqtt_on_message(self, mqttc, userdata, msg):
-        logging.info(msg.topic)
-        logging.info(msg.payload)
-    
-        try:
-            xml_root = BeautifulSoup(msg.payload,'html.parser')
-            data_payload = getattr(xml_root.find('pc').find('cin').find('con'), 'string', None)
-            #data = data_payload.decode('hex')
-            data = data_payload.decode('hex').decode('hex')
-            self.sendDataToDataServer(data)
-        except:
-            logging.warning(data_payload)
-            return
+         return
         
     def mqttSubscribe(self,topic):
         self.mqttc.subscribe(topic)
@@ -398,18 +387,6 @@ class ThingPlug(object):
     def setMqttClientId(self, client_id):
         self.mqtt_client_id = client_id
     
-    def sendDataToDataServer(self,payload):
-        if self.data_server_host == '' or self.data_server_port == None:
-            return False
-        
-        tcp_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            tcp_client.connect((self.data_server_host, self.data_server_port))
-            tcp_client.send(payload)
-            tcp_client.close()
-        except:
-            logging.warning('Error:sendDataToDataServer')
-            return
     
     def setDataServerInfo(self,host,port):
         self.data_server_host = host
@@ -424,80 +401,3 @@ class ThingPlug(object):
 #             if not (char in hex_digits):
 #                 return False
 #         return True
-
-USER_ID = ""
-USER_PW = ""
-
-TP_HOST = "onem2m.sktiot.com"
-TP_PORT = 9000
-
-LK_HOST = "127.0.0.1"
-LK_PORT = 5000
-
-CONTAINER = 'LoRa'
-APP_EUI = 'ThingPlug'
-SUBS_PREFIX = 'wiznet_'
-    
-#Parameter -h onem2m.sktiot.com -u lk_technet -pw lktn34!!@@ -p 9000 -lh 127.0.0.1 -lp 5000
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = '')
-    
-    parser.add_argument('-u', '--user_id', type=str, help='ThingPlug User ID', required=True)
-    parser.add_argument('-pw', '--user_pw', type=str, help='ThingPlug User Password', required=True)
-    
-    parser.add_argument('-th', '--tp_host', type=str, help='ThingPlug Host', required=False)
-    parser.add_argument('-tp', '--tp_port', type=int, help='ThingPlug Port', required=False)
-
-    parser.add_argument('-lh', '--lk_host', type=str, help='LK Technet Host', required=False)
-    parser.add_argument('-lp', '--lk_port', type=int, help='LK Technet Port', required=False)
-    
-    parser.add_argument('-c', '--container', type=str, help='ThingPlug Container Name', required=False)
-    parser.add_argument('-ae', '--app_eui', type=str, help='ThingPlug App EUI', required=False)
-    
-    args = parser.parse_args()
-
-    USER_ID = args.user_id
-    USER_PW = args.user_pw
-
-    if args.tp_host != None:    TP_HOST = args.tp_host
-    if args.tp_port != None:    TP_PORT = args.tp_port
-    if args.lk_host != None:    LK_HOST = args.lk_host
-    if args.lk_port != None:    LK_PORT = args.lk_port
-    if args.container != None:  CONTAINER = args.container
-    if args.app_eui != None:    APP_EUI = args.app_eui
-    
-    thingplug = ThingPlug(TP_HOST,TP_PORT)
-    
-    thingplug.setAppEui(APP_EUI)
-    thingplug.login(USER_ID, USER_PW)
-    thingplug.getDeviceList()
-
-# Sample 
-#     for i in range(20):
-#         subs_name = 'subscription_%02d'%(i)
-#         #print subs_name
-#         if thingplug.isExistedSubscription(NODE_ID, subs_name, CONTAINER) == True:
-#             thingplug.deleteSubscription(NODE_ID, subs_name, CONTAINER)
-        
-    mqtt_client_id = thingplug.getUserId() + "_bridge"
-    thingplug.setMqttClientId(mqtt_client_id)
-    thingplug.mqttConnect()
-
-    thingplug.setDataServerInfo(LK_HOST, LK_PORT)
-    status,node_cnt,node_list = thingplug.getDeviceList()
-    
-    if node_cnt == None:
-        logging.warning('Node list is empty')
-        sys.exit()
-    
-    for i in range(int(node_cnt)):
-        subs_name = SUBS_PREFIX + node_list[i]
-        if thingplug.retrieveSubscription(node_list[i], subs_name, CONTAINER) == True:
-            thingplug.deleteSubscription(node_list[i], subs_name, CONTAINER)
-         
-        thingplug.createSubscription(node_list[i], subs_name, CONTAINER, mqtt_client_id)
-    
-    thingplug.mqttLoopForever()
-    
