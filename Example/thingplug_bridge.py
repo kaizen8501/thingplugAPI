@@ -55,6 +55,7 @@ def mqtt_on_message_cb(client, userdata, msg):
         elif G_PAYLOAD_DECODE_OPT == 2:
             payload = data_payload.decode('hex').decode('hex')
         
+        logging.info(payload)
         sendDataToDataServer(payload)
     except:
         logging.warning(data_payload)

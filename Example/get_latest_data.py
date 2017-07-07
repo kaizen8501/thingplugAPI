@@ -9,7 +9,6 @@ from ThingPlugApi import ThingPlug
 
 THINGPLUG_HOST = 'onem2m.sktiot.com'
 THINGPLUG_PORT = 9443
-THINGPLUG_APPEUI = 'ThingPlug'
 PERIOD_TIME = 0
 
 def fun_getLatestData(thingplug,node_id, container, enable_log):
@@ -36,9 +35,9 @@ if __name__ == '__main__':
     parser.add_argument('-ni', '--node_id', type=str, help='ThingPlug Node ID', required=True)
     parser.add_argument('-ct', '--container', type=str, help='ThingPlug Container Name', required=True)
 
+    parser.add_argument('-ae', '--app_eui', type=str, help='ThingPlug APP EUI(Default:ThingPlug)', required=True)
     parser.add_argument('-th', '--thingplug_host', type=str, help='ThingPlug Host IP(Default:onem2m.sktiot.com)', required=False)
     parser.add_argument('-tp', '--thingplug_port', type=int, help='ThingPlug Port(Default:9443)', required=False)
-    parser.add_argument('-ae', '--app_eui', type=str, help='ThingPlug APP EUI(Default:ThingPlug)', required=False)
     parser.add_argument('-pt', '--period_time', type=int, help='Get Latest Data Period Time(Default:0,One Time)', required=False)
     parser.add_argument('-el', '--enable_log', type=int, help='', required=False)
     
@@ -54,8 +53,8 @@ if __name__ == '__main__':
     
     thingplug = ThingPlug.ThingPlug(THINGPLUG_HOST,THINGPLUG_PORT)
     thingplug.login(args.user_id, args.user_pw)
-    
-    thingplug.setAppEui(THINGPLUG_APPEUI)
+
+    thingplug.setAppEui(args.app_eui)
     
     if PERIOD_TIME == 0:
         status, data, lt_time = thingplug.getLatestData(args.node_id, args.container)

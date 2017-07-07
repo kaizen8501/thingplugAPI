@@ -1,5 +1,7 @@
 import sys
 import argparse
+import logging
+
 sys.path.insert(0,'../')
 from ThingPlugApi import ThingPlug 
 
@@ -21,4 +23,4 @@ if __name__ == '__main__':
     
     thingplug = ThingPlug.ThingPlug(THINGPLUG_HOST,THINGPLUG_PORT)
     thingplug.login(args.user_id, args.user_pw)
-    print thingplug.getuKey()
+    logging.info(thingplug.getuKey())
